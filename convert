@@ -1,0 +1,80 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# @Time    : 2018/2/12 16:14
+# @Author  : zhaoy
+# @Site    : 
+# @File    : mongo2mysql.py
+# @Description:
+
+import pymysql
+import pymongo
+
+
+class Mongodb2Mysql(object):
+
+    def __init__(self):
+        self.mongo_db = pymongo.MongoClient('localhost', 27017).xinlong
+        self.mysql_db = pymysql.connect(host='localhost',
+                                   user='root',
+                                   password='root',
+                                   database='xinlong',
+                                   port=3306,
+                                   charset='utf8mb4',
+                                   cursorclass=pymysql.cursors.DictCursor)
+        self.cursor = self.mysql_db.cursor()
+
+    def show_mongo_collection(self):
+        """
+        显示mongodb 某个库下的所有 collection
+        :return:
+        """
+        res = self.mongo_db.collection_names()
+        print(res)
+        return res
+
+
+    def mongo_output(self, collection):
+        """
+        mongodb 数据导出
+        :return:
+        """
+        res = self.mongo_db.get_collection(collection).find({},{'_id': 0})
+        # for item in res:
+        #     print(item)
+        return res
+
+    def create_mysql_table(self, table_name):
+        """
+        建mysql 表
+        :return:
+        """
+        sql = """create table if not exists %s(id int, cityname varchar(255), elevation varchar(255)) engine=innodb charset utf8;""" %(table_name)
+        print(sql)
+        self.cursor.execute(sql)
+
+    def mysql_input(self, table_name, item):
+        """
+        mysql 导入
+        :return:
+        """
+        cityname = item.get('cityname')
+        elevation = item.get('elevation')
+        sql = """ insert into %s(cityname, elevation) values(%s, '%s', '%s')""" % (table_name, cityname, elevation)
+        res = self.cursor.execute(sql)
+        print(res)
+
+    def run(self):
+        # res = self.cursor.show_mongo_collection()
+        out_data = self.mongo_output('result_elevation_data')
+        self.create_mysql_table('result_elevation_data')
+        for item in out_data:
+            self.mysql_input('result_elevation_data', item)
+        self.mysql_db.commit()
+
+if __name__ == '__main__':
+    # Mongodb2Mysql().show_mongo_collection()
+    # Mongodb2Mysql().mongo_output('result_elevation_data')
+    # Mongodb2Mysql().create_mysql_table()
+    # Mongodb2Mysql().mysql_input()
+    Mongodb2Mysql().run()
+
