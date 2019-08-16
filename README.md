@@ -1,9 +1,8 @@
-# mongodb -> mysql
-爬虫抓下来的原始数据存放在mongodb中， 为了给后端提供更方便的进行数据处理分析、把数据从mongodb导入mysql
-export_shell脚本负责从mongodb所在服务器（192.168.50.181） 导出csv数据、发送数据到mysql数据库所在服务器
-（192.168.50.154）
+# mongodb to mysql
+有多种方式实现，如下
+##  mongoexport + mysqlimport
+ 优点：速度快，导几十万条数据的表，也只需要秒级
 - mongodb导出csv
-    
     执行export_shell中相应表的脚本
     ```
     mongoexport -d ods -c suning_store -f "baiduPoiId,address,baiduPoiName,locLat,locLng,provName,cityName,districtName,crawl_time" --type csv -o ~/data/$(date +%Y%m%d)/suning_store.csv
@@ -19,4 +18,33 @@ export_shell脚本负责从mongodb所在服务器（192.168.50.181） 导出csv�
     ```
     mysqlimport --ignore-lines=1  --fields-terminated-by=, --local --host 127.0.0.1 -u dw -p ods ~/data/data/$(date +%Y%m%d)/suning_goods.csv
     ```
+ 
+ ## python脚本
+ 
+ 需要通过python 的db驱动写相应的查询，繁琐，且效率不高
+ 建议使用pandas + sqlalchemy + cStringIO
+ 效率也不逊色
+ ```python
+import cStringIO
+ 
+output = cStringIO.StringIO()
+# ignore the index
+df_a.to_csv(output, sep='\t',index = False, header = False)
+output.getvalue()
+# jump to start of stream
+output.seek(0)
+ 
+connection = engine.raw_connection() #engine 是 from sqlalchemy import create_engine
+cursor = connection.cursor()
+# null value become ''
+cursor.copy_from(output,table_name,null='')
+connection.commit()
+```
+ 
+ 
+ 
+ 
+ 
+ 
+ 
  
