@@ -25,6 +25,7 @@
  建议使用pandas + sqlalchemy + cStringIO
  效率也不逊色
  ```python
+ # 国外大牛对pandas to_sql的优化
 import cStringIO
  
 output = cStringIO.StringIO()
